@@ -1,2 +1,2 @@
 # connection
-LMS assembly code for communicating with the mission server.
+LMS assembly code for communicating with the Mission Server.
