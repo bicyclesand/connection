@@ -1,0 +1,463 @@
+// Constants are declared in between objects (vmthread and subcall)
+define    MY_GLOBAL_CONSTANT            100       // MY_GLOBAL_CONSTANT equals 100
+
+// Global variables are declared in between objects
+DATAF     MyGlobalFloat                           // MyGlobalFloat is of the type float
+   
+vmthread MAIN
+{
+     //Local variable
+     DATA8   MyLocalByte         
+     DATA8 exit	
+     DATA8 begin
+     DATA8 wait 
+
+     UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+     UI_DRAW(TEXT, FG_COLOR, 30, 50, 'Steering . . .')  //write steering at 30
+     UI_DRAW(UPDATE)
+     DATA8 flag
+     DATA8 sub
+     DATA8 bus
+     DATA8 subR
+     DATA8 busR
+     DATAF NUMB
+
+     MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+
+     UI_WRITE(LED, LED_ORANGE_FLASH)
+    
+BEGIN:
+      DATA32 timeer
+      OUTPUT_STEP_POWER(0, 9, -50, 0, 365, 0, 0)  //Layer, motors, power, up, at, down, brake
+      //forwards//////////////////////////////////////////////////////FORWARD////////////////
+
+
+            MOVE8_8(0,begin)
+Loop:
+	OUTPUT_START(0,9)
+	UI_WRITE(LED, LED_ORANGE)
+  
+             MAILBOX_READ(3,1,1,NUMB)
+	TIMER_WAIT(200, timeer)
+	TIMER_READY(timeer)
+
+                OUTPUT_STOP(0, 9, 0)
+
+                MOVE8_8(0,sub) 
+                //UI_BUTTON(SHORTPRESS, LEFT_BUTTON, sub)
+                   JR_NEQF(NUMB,0x40800000, CaseStraight)//IF !FOUR
+                        MOVE8_8(1,sub)
+                        MAILBOX_CLOSE(3)
+                        MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+                JR_TRUE(sub, Sub)
+                CaseStraight:	
+
+
+                MOVE8_8(0,bus)
+                //UI_BUTTON(SHORTPRESS, RIGHT_BUTTON, bus)
+                    JR_NEQF(NUMB,0x40c00000, CaseGo)//IF !SIX
+                         MOVE8_8(1,bus)
+                         MAILBOX_CLOSE(3)
+                         MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+                JR_TRUE(bus, Bus)
+                CaseGo:
+
+     	UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+     	UI_DRAW(TEXT, FG_COLOR, 30, 50, 'FORWARD . . .')  //write forward at 30
+     	MAILBOX_WRITE('TGS-UH2', HW_BT, 'TextMailbox', DATA_S, 1, 'FORWARD . . .')
+             UI_DRAW(UPDATE)
+
+	MOVE8_8(0, flag)
+               JR_NEQF(NUMB,0x40a00000, CaseForward)//IF !FIVE
+                    MOVE8_8(1,flag)
+                    MAILBOX_CLOSE(3)
+                    MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+               CaseForward:
+
+	//UI_BUTTON(SHORTPRESS, ENTER_BUTTON, flag)
+JR_FALSE(flag, Loop)
+
+         
+      UI_BUTTON(FLUSH)
+      UI_WRITE(LED, LED_ORANGE_FLASH)
+      UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+      UI_DRAW(TEXT, FG_COLOR, 30, 50, 'Waiting . . .')  //write waiting at 30
+      UI_DRAW(UPDATE)
+      DATA8 Flagwait
+      DATA32 timerwait
+
+      //stoped///////////////////////////////////////////////////////////STOP///////////////////
+
+Loopwait:
+             MOVE8_8(0,wait)
+             MAILBOX_READ(3,1,1,NUMB)
+	TIMER_WAIT(200, timerwait)
+	TIMER_READY(timerwait)
+
+
+               JR_NEQF(NUMB,0x40e00000, CaseLW)//IF !SEVEN
+                    MOVE8_8(1,exit)
+                    MAILBOX_CLOSE(3)
+               CaseLW:
+
+               JR_NEQF(NUMB,0x40a00000, CaseW)//IF !FIVE
+                    MOVE8_8(1,begin)
+                    MAILBOX_CLOSE(3)
+                    MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+               CaseW:
+               MOVE8_8(0,Flagwait)
+                    JR_NEQF(NUMB,0x40000000, CaseWW)//IF !TWO
+                         MOVE8_8(1,Flagwait)
+                         MAILBOX_CLOSE(3)
+                         MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+                CaseWW:
+
+	//UI_BUTTON(SHORTPRESS, DOWN_BUTTON, Flagwait)
+              //  UI_BUTTON(SHORTPRESS, ENTER_BUTTON, exit)
+             JR_TRUE(begin, BEGIN)
+	JR_TRUE(exit, EXIT)
+JR_FALSE(Flagwait, Loopwait)
+
+      UI_BUTTON(FLUSH)
+
+
+      UI_WRITE(LED, LED_RED_PULSE)
+      UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+      UI_DRAW(TEXT, FG_COLOR, 30, 50, 'Reversing . . .')  //write reversing at 30
+      UI_DRAW(UPDATE)
+
+      DATA8 Flag2
+      DATA32 timer2
+      UI_BUTTON(FLUSH)
+
+      OUTPUT_STEP_POWER(0,9, 50, 0, 365, 0, 0)  //layer, motors, power, up, at, down, brake 
+      //backwards
+
+
+      //reverse//////////////////////////////////////////////////////////REVERSE///////////////////
+
+Loop2:
+
+	OUTPUT_START(0,9)
+
+             MAILBOX_READ(3,1,1,NUMB)
+	TIMER_WAIT(200, timer2)
+	TIMER_READY(timer2)
+
+	OUTPUT_STOP(0, 9, 0)
+
+
+             MOVE8_8(0,sub) 
+             //UI_BUTTON(SHORTPRESS, LEFT_BUTTON, sub)
+             JR_NEQF(NUMB,0x40800000, CaseR)//IF !FOUR
+                 MOVE8_8(1,sub)
+                 MAILBOX_CLOSE(3)
+                 MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+             JR_TRUE(sub, SubR)
+             CaseR:	
+
+             MOVE8_8(0,bus)
+             //UI_BUTTON(SHORTPRESS, RIGHT_BUTTON, bus)
+             JR_NEQF(NUMB,0x40c00000, CaseRo)//IF !SIX
+                   MOVE8_8(1,bus)
+                   MAILBOX_CLOSE(3)
+                   MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+             JR_TRUE(bus, BusR)
+             CaseRo:
+
+             UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+             UI_DRAW(TEXT, FG_COLOR, 30, 50, 'Reversing . . .')  //write reversing at 30
+             MAILBOX_WRITE('TGS-UH2', HW_BT, 'TextMailbox', DATA_S, 1, 'REVERSE . . .')
+             UI_DRAW(UPDATE)
+
+              MOVE8_8(0, Flag2)
+              JR_NEQF(NUMB,0x40e00000, Caseee)//IF !SEVEN
+                   MOVE8_8(1,Flag2)
+                   MAILBOX_CLOSE(3)
+              Caseee:
+
+              JR_NEQF(NUMB,0x40a00000, Casebb)//IF !FIVE
+                   MOVE8_8(1,wait)
+                   MAILBOX_CLOSE(3)
+                   MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+              Casebb:
+
+	//UI_BUTTON(SHORTPRESS, ENTER_BUTTON, Flag2)
+             JR_TRUE(wait, Loopwait)
+JR_FALSE(Flag2, Loop2)
+	JR_TRUE(Flag2, EXIT)
+
+	UI_WRITE(LED, LED_ORANGE_FLASH)
+	UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+	UI_DRAW(TEXT, FG_COLOR, 30, 50, 'Waiting . . .')  //write waiting at 30
+	UI_DRAW(UPDATE)
+
+
+
+	UI_BUTTON(WAIT_FOR_PRESS)
+	UI_BUTTON(SHORTPRESS, ENTER_BUTTON, exit)
+JR_TRUE(exit, EXIT)
+Sub:
+	CALL(MySubcall,MyLocalByte)    
+                OUTPUT_STEP_POWER(0, 9, -50, 0, 365, 0, 0)
+     	OUTPUT_STEP_POWER(0,2,90, 0, 45, 0,1)//RETURN STEERING
+		DATA32 timerR
+
+  	  OUTPUT_START(0, 2)
+	  OUTPUT_START(0,9)
+		TIMER_WAIT(200, timerR)
+		TIMER_READY(timerR)
+                          MAILBOX_CLOSE(3)
+                          MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+   	 OUTPUT_STOP(0,2,1)
+                 OUTPUT_STOP(0,9,0)
+
+JR_FALSE(flag, Loop)
+Bus:
+	CALL(MySubcall2, MyLocalByte)
+	OUTPUT_STEP_POWER(0, 9, -50, 0, 365, 0, 0)
+     	OUTPUT_STEP_POWER(0,2,-90, 0, 45, 0,1)//RETURN STEERING
+		DATA32 timerRD
+
+  	  OUTPUT_START(0, 2)
+	  OUTPUT_START(0,9)
+		TIMER_WAIT(200, timerRD)
+		TIMER_READY(timerRD)
+                          MAILBOX_CLOSE(3)
+                          MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+
+   	 OUTPUT_STOP(0,2,1)
+                 OUTPUT_STOP(0,9,0)
+
+JR_FALSE(flag, Loop)
+SubR:
+	CALL(MySubcall3,MyLocalByte)    
+                OUTPUT_STEP_POWER(0, 9, 50, 0, 365, 0, 0)
+     	OUTPUT_STEP_POWER(0,2,90, 0, 30, 0,1)//RETURN STEERING
+		DATA32 timerR
+
+  	  OUTPUT_START(0, 2)
+	  OUTPUT_START(0,9)
+		TIMER_WAIT(200, timerR)
+		TIMER_READY(timerR)
+                          MAILBOX_CLOSE(3)
+                          MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+   	 OUTPUT_STOP(0,2,1)
+                 OUTPUT_STOP(0,9,0)
+JR_FALSE(Flag2, Loop2)
+BusR:
+	CALL(MySubcall4, MyLocalByte)
+	OUTPUT_STEP_POWER(0, 9, 50, 0, 365, 0, 0)
+     	OUTPUT_STEP_POWER(0,2,-90, 0, 30, 0,1)//RETURN STEERING
+		DATA32 timerRD
+
+  	  OUTPUT_START(0, 2)
+	  OUTPUT_START(0,9)
+		TIMER_WAIT(200, timerRD)
+		TIMER_READY(timerRD)
+                          MAILBOX_CLOSE(3)
+                          MAILBOX_OPEN(3,'NumberMailbox', DATA_F, 0, 250)
+   	 OUTPUT_STOP(0,2,1)
+                 OUTPUT_STOP(0,9,0)
+
+JR_FALSE(Flag2, Loop2)
+
+
+
+
+
+EXIT:
+}
+
+
+subcall   MySubcall                               // Sub calls are all global objects
+{
+  IO_8    MyParameter                             // Declare sub call parameters
+
+  DATA8   MyLocalVariable                         // Declare sub call local variables
+
+  MOVE8_8(MY_GLOBAL_CONSTANT,MyLocalVariable)     // Initialise MyLocalVariable
+
+  MOVE8_8(MyLocalVariable,MyParameter)            // Return the value of MyLocalVariable in parameter MyParameter
+  UI_WRITE(LED, LED_ORANGE_FLASH)
+  
+  DATA8 flagee
+  DATA32 subtimer
+                OUTPUT_STEP_POWER(0, 9, -50, 0, 365, 0, 0)
+     	OUTPUT_STEP_POWER(0,2,-90, 0, 45, 0,1)//turn left
+		DATA32 timer
+
+  	  OUTPUT_START(0, 2)
+	  
+		TIMER_WAIT(200, timer)
+		TIMER_READY(timer)
+   	 OUTPUT_STOP(0,2,1)
+	 
+
+UI_BUTTON(FLUSH)
+Loopsub:
+	OUTPUT_START(0,9)
+	DATA32 timerls
+     	UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+     	UI_DRAW(TEXT, FG_COLOR, 30, 50, 'LEFT . . .')  //write looping at 30
+             MAILBOX_WRITE('TGS-UH2', HW_BT, 'TextMailbox', DATA_S, 1, 'LEFT . . .')
+             MAILBOX_READ(3,1,1,MyGlobalFloat)
+     	UI_DRAW(UPDATE)
+	TIMER_WAIT(200, timerls)
+	TIMER_READY(timerls)
+
+	MOVE8_8(0, flagee)
+	 JR_NEQF(MyGlobalFloat,0x40a00000, CaseF)//IF !FIVE
+	   MOVE8_8(1,flagee)
+	 CaseF:
+	OUTPUT_STOP(0, 9, 0)
+
+	//UI_BUTTON(SHORTPRESS, ENTER_BUTTON, flagee)
+JR_FALSE(flagee, Loopsub)
+
+
+
+}
+
+
+subcall   MySubcall2                               // Sub calls are all global objects
+{
+  IO_8    MyParameter                             // Declare sub call parameters
+
+  DATA8   MyLocalVariable                         // Declare sub call local variables
+
+  MOVE8_8(MY_GLOBAL_CONSTANT,MyLocalVariable)     // Initialise MyLocalVariable
+
+  MOVE8_8(MyLocalVariable,MyParameter)            // Return the value of MyLocalVariable in parameter MyParameter
+  UI_WRITE(LED, LED_ORANGE_FLASH)
+  
+  DATA8 flagee
+  DATA32 subtimer
+	OUTPUT_STEP_POWER(0, 9, -50, 0, 365, 0, 0)
+     	OUTPUT_STEP_POWER(0,2,90, 0, 45, 0,1)//turn right
+		DATA32 timer
+
+  	  OUTPUT_START(0, 2)
+		TIMER_WAIT(200, timer)
+		TIMER_READY(timer)
+   	 OUTPUT_STOP(0,2,1)
+UI_BUTTON(FLUSH)
+Loopsub:
+	OUTPUT_START(0, 9)
+	DATA32 timerls
+     	UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+     	UI_DRAW(TEXT, FG_COLOR, 30, 50, 'RIGHT . . .')  //write buslooping at 30
+     	MAILBOX_WRITE('TGS-UH2', HW_BT, 'TextMailbox', DATA_S, 1, 'RIGHT . . .')
+             MAILBOX_READ(3,1,1,MyGlobalFloat)
+             UI_DRAW(UPDATE)
+	TIMER_WAIT(200, timerls)
+	TIMER_READY(timerls)
+	
+             MOVE8_8(0, flagee)
+	 JR_NEQF(MyGlobalFloat,0x40a00000, CaseF2)//IF !FIVE
+	   MOVE8_8(1,flagee)
+	 CaseF2:
+	OUTPUT_STOP(0, 9, 0)
+
+	//UI_BUTTON(SHORTPRESS, ENTER_BUTTON, flagee)
+JR_FALSE(flagee, Loopsub)
+
+
+
+}
+
+
+subcall   MySubcall3                               // Sub calls are all global objects
+{
+  IO_8    MyParameter                             // Declare sub call parameters
+
+  DATA8   MyLocalVariable                         // Declare sub call local variables
+
+  MOVE8_8(MY_GLOBAL_CONSTANT,MyLocalVariable)     // Initialise MyLocalVariable
+
+  MOVE8_8(MyLocalVariable,MyParameter)            // Return the value of MyLocalVariable in parameter MyParameter
+  UI_WRITE(LED, LED_RED_FLASH)
+  
+  DATA8 flagee
+  DATA32 subtimer
+                OUTPUT_STEP_POWER(0, 9, 50, 0, 365, 0, 0)
+     	OUTPUT_STEP_POWER(0,2,-90, 0, 30, 0,1)//back left
+		DATA32 timer
+
+  	  OUTPUT_START(0, 2)
+	  
+		TIMER_WAIT(200, timer)
+		TIMER_READY(timer)
+   	 OUTPUT_STOP(0,2,1)
+	 
+
+UI_BUTTON(FLUSH)
+Loopsub:
+	OUTPUT_START(0,9)
+	DATA32 timerls
+     	UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+     	UI_DRAW(TEXT, FG_COLOR, 30, 50, 'REVERSE LEFT . . .')  //write looping at 30
+     	MAILBOX_WRITE('TGS-UH2', HW_BT, 'TextMailbox',DATA_S,1,'REVERSE LEFT . . .')
+             MAILBOX_READ(3,1,1,MyGlobalFloat)
+             UI_DRAW(UPDATE)
+	TIMER_WAIT(200, timerls)
+	TIMER_READY(timerls)
+
+             MOVE8_8(0, flagee)
+	 JR_NEQF(MyGlobalFloat,0x40a00000, CaseR1)//IF !FIVE
+	   MOVE8_8(1,flagee)
+	 CaseR1:
+	OUTPUT_STOP(0, 9, 0)
+
+	//UI_BUTTON(SHORTPRESS, ENTER_BUTTON, flagee)
+JR_FALSE(flagee, Loopsub)
+
+
+
+}
+
+
+subcall   MySubcall4                               // Sub calls are all global objects
+{
+  IO_8    MyParameter                             // Declare sub call parameters
+
+  DATA8   MyLocalVariable                         // Declare sub call local variables
+
+  MOVE8_8(MY_GLOBAL_CONSTANT,MyLocalVariable)     // Initialise MyLocalVariable
+
+  MOVE8_8(MyLocalVariable,MyParameter)            // Return the value of MyLocalVariable in parameter MyParameter
+  UI_WRITE(LED, LED_RED_FLASH)
+  
+  DATA8 flagee
+  DATA32 subtimer
+	OUTPUT_STEP_POWER(0, 9, 50, 0, 365, 0, 0)
+     	OUTPUT_STEP_POWER(0,2,90, 0, 30, 0,1)//back right
+		DATA32 timer
+
+  	  OUTPUT_START(0, 2)
+		TIMER_WAIT(200, timer)
+		TIMER_READY(timer)
+   	 OUTPUT_STOP(0,2,1)
+UI_BUTTON(FLUSH)
+Loopsub:
+	OUTPUT_START(0, 9)
+	DATA32 timerls
+     	UI_DRAW(FILLWINDOW, 0,0,0) //clear screen
+     	UI_DRAW(TEXT, FG_COLOR, 30, 50, 'REVERSE RIGHT . . .')//write buslooping at 30
+     	MAILBOX_WRITE('TGS-UH2',HW_BT,'TextMailbox',DATA_S,1,'REVERSE RIGHT . . .')
+             MAILBOX_READ(3,1,1,MyGlobalFloat)
+             UI_DRAW(UPDATE)
+	TIMER_WAIT(200, timerls)
+	TIMER_READY(timerls)
+
+             MOVE8_8(0, flagee)
+	 JR_NEQF(MyGlobalFloat,0x40a00000, CaseR2)//IF !FIVE
+	   MOVE8_8(1,flagee)
+	 CaseR2:
+
+	OUTPUT_STOP(0, 9, 0)
+
+	//UI_BUTTON(SHORTPRESS, ENTER_BUTTON, flagee)
+JR_FALSE(flagee, Loopsub)
+
+}
